@@ -1,50 +1,52 @@
-import { useState ,  useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './App.css';
 
-// 1. This is a sub-component for a single square
+// 1. Sub-component for a single square
 function Square({ value, onSquareClick }) {
+  // Dynamically add 'x-style' or 'o-style' based on the value
+  const colorClass = value === 'X' ? 'x-style' : value === 'O' ? 'o-style' : '';
+
   return (
-    <button className="square" onClick={onSquareClick}>
+    <button className={`square ${colorClass}`} onClick={onSquareClick}>
       {value}
     </button>
   );
 }
 
-
-
-// 2. This is the main App component
+// 2. Main App component
 export default function App() {
-  // State: An array of 9 elements representing the grid slots, initially all null
   const [board, setBoard] = useState(Array(9).fill(null));
-  // State: Boolean to track if X is the next player
   const [xIsNext, setXIsNext] = useState(true);
-
   const [machine, setMachineMode] = useState(true);
 
-  // const [c]
+  // useEffect handles the AI's turn automatically when it's 'O's turn in machine mode
+  useEffect(() => {
+    // Only run if machine mode is active, it's O's turn, and the game isn't over
+    if (machine && !xIsNext && !calculateWinner(board) && board.some(s => s === null)) {
+      
+      // Added a small 300ms delay so the machine doesn't play instantly (feels more natural!)
+      const timer = setTimeout(() => {
+        const bestMove = findBestMove(board);
+        if (bestMove !== -1) {
+          const nextBoard = board.slice();
+          nextBoard[bestMove] = 'O';
+          setBoard(nextBoard);
+          setXIsNext(true);
+        }
+      }, 300);
+
+      return () => clearTimeout(timer);
+    }
+  }, [xIsNext, machine, board]);
 
   // Function to handle clicks on individual squares
   function handleClick(index) {
-    // If the square is already filled or the game is won, do nothing
-    if (board[index] || calculateWinner(board)) return;
+    // Ignore clicks if square filled, game won, or if it's the machine's turn to think
+    if (board[index] || calculateWinner(board) || (machine && !xIsNext)) return;
 
-    // Create a copy of the board array (Don't mutate state directly!)
     const nextBoard = board.slice();
+    nextBoard[index] = xIsNext ? 'X' : 'O';
 
-    // Assign X or O based on the current turn
-    if (!mode) {
-      if (xIsNext) {
-        nextBoard[index] = 'X';
-      } else {
-        nextBoard[index] = 'O';
-      }
-    }
-    else {  
-
-
-    }
-
-    // Update state, triggering React to re-render the Virtual DOM
     setBoard(nextBoard);
     setXIsNext(!xIsNext);
   }
@@ -59,14 +61,7 @@ export default function App() {
     status = 'Next player: ' + (xIsNext ? 'X' : 'O');
   }
 
-  let mode;
-
-  if (machine) {
-    mode = "vs MACHINE";
-  }
-  else {
-    mode = "vs HUMAN";
-  }
+  const mode = machine ? "vs MACHINE" : "vs HUMAN";
 
   // Reset function to clear the board
   function handleReset() {
@@ -79,7 +74,6 @@ export default function App() {
       <h1 className="title">Tic-Tac-Toe</h1>
 
       <div className="status">{status}</div>
-
       <div className="mode">{mode}</div>
 
       <div className="board">
@@ -102,18 +96,18 @@ export default function App() {
 
       <button className="reset-btn" onClick={handleReset}>Restart Game</button>
 
-      <h3>who will be your opponent? </h3>
+      <h3>Who will be your opponent?</h3>
 
       <div className="mode-setter">
         <button className="human" onClick={() => setMachineMode(false)}> HUMAN </button>
         <button className="machine" onClick={() => setMachineMode(true)}> MACHINE </button>
       </div>
-
     </div>
   );
 }
 
-// Helper function to check lines for a winner
+// --- HELPER FUNCTIONS FOR GAME LOGIC & ALPHA-BETA MINIMAX ---
+
 function calculateWinner(squares) {
   const lines = [
     [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
@@ -127,4 +121,63 @@ function calculateWinner(squares) {
     }
   }
   return null;
+}
+
+// Minimax algorithm function with Alpha-Beta Pruning
+function minimax(squares, depth, isMaximizing, alpha, beta) {
+  const winner = calculateWinner(squares);
+  
+  // Base cases: Return score adjusted by depth so AI chooses the fastest win/longest survival
+  if (winner === 'O') return 10 - depth; // AI wins
+  if (winner === 'X') return depth - 10; // Human wins
+  if (squares.every(s => s !== null)) return 0; // Draw
+
+  if (isMaximizing) {
+    let maxEval = -Infinity;
+    for (let i = 0; i < squares.length; i++) {
+      if (squares[i] === null) {
+        squares[i] = 'O'; // Make move
+        let score = minimax(squares, depth + 1, false, alpha, beta);
+        squares[i] = null; // Undo move
+        maxEval = Math.max(maxEval, score);
+        alpha = Math.max(alpha, score);
+        if (beta <= alpha) break; // Beta cutoff (Pruning)
+      }
+    }
+    return maxEval;
+  } else {
+    let minEval = Infinity;
+    for (let i = 0; i < squares.length; i++) {
+      if (squares[i] === null) {
+        squares[i] = 'X'; // Make move
+        let score = minimax(squares, depth + 1, true, alpha, beta);
+        squares[i] = null; // Undo move
+        minEval = Math.min(minEval, score);
+        beta = Math.min(beta, score);
+        if (beta <= alpha) break; // Alpha cutoff (Pruning)
+      }
+    }
+    return minEval;
+  }
+}
+
+// Function to find the absolute best move on the board for 'O'
+function findBestMove(squares) {
+  let bestVal = -Infinity;
+  let bestMove = -1;
+
+  for (let i = 0; i < squares.length; i++) {
+    if (squares[i] === null) {
+      squares[i] = 'O';
+      // Call minimax starting with alpha = -Infinity and beta = Infinity
+      let moveVal = minimax(squares, 0, false, -Infinity, Infinity);
+      squares[i] = null;
+
+      if (moveVal > bestVal) {
+        bestVal = moveVal;
+        bestMove = i;
+      }
+    }
+  }
+  return bestMove;
 }
