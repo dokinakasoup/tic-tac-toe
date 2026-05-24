@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
-// 1. Sub-component for a single square
+
 function Square({ value, onSquareClick }) {
-  // Dynamically add 'x-style' or 'o-style' based on the value
+
   const colorClass = value === 'X' ? 'x-style' : value === 'O' ? 'o-style' : '';
 
   return (
@@ -13,18 +13,18 @@ function Square({ value, onSquareClick }) {
   );
 }
 
-// 2. Main App component
+
 export default function App() {
   const [board, setBoard] = useState(Array(9).fill(null));
   const [xIsNext, setXIsNext] = useState(true);
   const [machine, setMachineMode] = useState(true);
 
-  // useEffect handles the AI's turn automatically when it's 'O's turn in machine mode
+  
   useEffect(() => {
-    // Only run if machine mode is active, it's O's turn, and the game isn't over
+    
     if (machine && !xIsNext && !calculateWinner(board) && board.some(s => s === null)) {
       
-      // Added a small 300ms delay so the machine doesn't play instantly (feels more natural!)
+    
       const timer = setTimeout(() => {
         const bestMove = findBestMove(board);
         if (bestMove !== -1) {
@@ -39,9 +39,9 @@ export default function App() {
     }
   }, [xIsNext, machine, board]);
 
-  // Function to handle clicks on individual squares
+  
   function handleClick(index) {
-    // Ignore clicks if square filled, game won, or if it's the machine's turn to think
+  
     if (board[index] || calculateWinner(board) || (machine && !xIsNext)) return;
 
     const nextBoard = board.slice();
@@ -63,7 +63,7 @@ export default function App() {
 
   const mode = machine ? "vs MACHINE" : "vs HUMAN";
 
-  // Reset function to clear the board
+  
   function handleReset() {
     setBoard(Array(9).fill(null));
     setXIsNext(true);
@@ -71,7 +71,7 @@ export default function App() {
 
   return (
     <div className="game-container">
-      <h1 className="title">Tic-Tac-Toe</h1>
+      {/* <h1 c lassName="title">Tic-Tac-Toe</h1> */}
 
       <div className="status">{status}</div>
       <div className="mode">{mode}</div>
@@ -96,23 +96,23 @@ export default function App() {
 
       <button className="reset-btn" onClick={handleReset}>Restart Game</button>
 
-      <h3>Who will be your opponent?</h3>
+      {/* <h3>Who will be your opponent?</h3> */}
 
       <div className="mode-setter">
-        <button className="human" onClick={() => setMachineMode(false)}> HUMAN </button>
-        <button className="machine" onClick={() => setMachineMode(true)}> MACHINE </button>
+        <button className="human" onClick={() => setMachineMode(false)}> MULTI PLAYER </button>
+        <button className="machine" onClick={() => setMachineMode(true)}> SINGLE PLAYER </button>
       </div>
     </div>
   );
 }
 
-// --- HELPER FUNCTIONS FOR GAME LOGIC & ALPHA-BETA MINIMAX ---
+
 
 function calculateWinner(squares) {
   const lines = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Rows
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columns
-    [0, 4, 8], [2, 4, 6]             // Diagonals
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], 
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], 
+    [0, 4, 8], [2, 4, 6]             
   ];
   for (let i = 0; i < lines.length; i++) {
     const [a, b, c] = lines[i];
@@ -123,25 +123,25 @@ function calculateWinner(squares) {
   return null;
 }
 
-// Minimax algorithm function with Alpha-Beta Pruning
+
 function minimax(squares, depth, isMaximizing, alpha, beta) {
   const winner = calculateWinner(squares);
   
-  // Base cases: Return score adjusted by depth so AI chooses the fastest win/longest survival
-  if (winner === 'O') return 10 - depth; // AI wins
-  if (winner === 'X') return depth - 10; // Human wins
-  if (squares.every(s => s !== null)) return 0; // Draw
+
+  if (winner === 'O') return 10 - depth; 
+  if (winner === 'X') return depth - 10; 
+  if (squares.every(s => s !== null)) return 0;
 
   if (isMaximizing) {
     let maxEval = -Infinity;
     for (let i = 0; i < squares.length; i++) {
       if (squares[i] === null) {
-        squares[i] = 'O'; // Make move
+        squares[i] = 'O'; 
         let score = minimax(squares, depth + 1, false, alpha, beta);
-        squares[i] = null; // Undo move
+        squares[i] = null; 
         maxEval = Math.max(maxEval, score);
         alpha = Math.max(alpha, score);
-        if (beta <= alpha) break; // Beta cutoff (Pruning)
+        if (beta <= alpha) break; 
       }
     }
     return maxEval;
@@ -149,19 +149,19 @@ function minimax(squares, depth, isMaximizing, alpha, beta) {
     let minEval = Infinity;
     for (let i = 0; i < squares.length; i++) {
       if (squares[i] === null) {
-        squares[i] = 'X'; // Make move
+        squares[i] = 'X'; 
         let score = minimax(squares, depth + 1, true, alpha, beta);
-        squares[i] = null; // Undo move
+        squares[i] = null; 
         minEval = Math.min(minEval, score);
         beta = Math.min(beta, score);
-        if (beta <= alpha) break; // Alpha cutoff (Pruning)
+        if (beta <= alpha) break; 
       }
     }
     return minEval;
   }
 }
 
-// Function to find the absolute best move on the board for 'O'
+
 function findBestMove(squares) {
   let bestVal = -Infinity;
   let bestMove = -1;
@@ -169,7 +169,7 @@ function findBestMove(squares) {
   for (let i = 0; i < squares.length; i++) {
     if (squares[i] === null) {
       squares[i] = 'O';
-      // Call minimax starting with alpha = -Infinity and beta = Infinity
+      
       let moveVal = minimax(squares, 0, false, -Infinity, Infinity);
       squares[i] = null;
 
