@@ -3,7 +3,7 @@
 A sleek, modern, and completely responsive Tic-Tac-Toe web application built with React and powered by an unbeatable Artificial Intelligence engine using the **Minimax Algorithm with Alpha-Beta Pruning**.
 
 ## 🚀 Live Demo
-You can play the live version of the game here: **[Insert Your GitHub Pages Link Here]**
+You can play the live version of the game here: website ready  https://dokinakasoup.github.io/tic-tac-toe/
 
 ---
 
